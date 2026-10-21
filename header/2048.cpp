@@ -1,142 +1,184 @@
-#include "./2048.hpp"
-#include <vector>
+#include "2048.hpp"
 
-void Jeu::ajouterDeuxOuQuatre() {
-    vector<pair<int,int>> tuilesVides;
-    for(int i=0;i<4;i++){
-        for(int j=0;j<4;j++){
-            if(plateau[i][j]==0){
-                tuilesVides.push_back({i,j});
-            }
-        }
-    }
-    if(tuilesVides.size()>0){
-        int placeAleatoire = rand()%(tuilesVides.size());
-        plateau[tuilesVides[placeAleatoire].first][tuilesVides[placeAleatoire].second] = tireDeuxOuQuatre();
-    }
+Game::Game() {
+    tiles = std::vector<std::vector<int>>(4,std::vector<int>(4,0));
+    score = 0;
+    add_number();
 }
 
-void Jeu::echangerLignesEtColonnes() {
-    int tmp;
-    for(int i =1; i<4;i++){
-        for(int j=0;j<i;j++){
-            tmp=plateau[j][i];
-            plateau[j][i]=plateau[i][j];
-            plateau[i][j]=tmp;
+void Game::add_number() {
+    std::vector<std::pair<int,int>> empty_tiles;
+
+    for(int i=0;i<4;i++) {
+        for(int j=0;j<4;j++) {
+            if(tiles[i][j]==0) empty_tiles.push_back({i,j});
         }
     }
+
+    if(empty_tiles.empty()) {
+        return;
+    }
+
+    auto [i,j] = empty_tiles[rand()%empty_tiles.size()];
+
+    tiles[i][j] = rand()%10==0 ? 4 : 2;
 }
 
-void Jeu::fusionnerEtAlignerLesLignes(bool droite){
-    for(int i=0;i<4;i++){
-        if(droite){
-            plateau[i]=retournerLigne(plateau[i]);
-        }
-        for(int j=0;j<4;j++){
+bool Game::move_left() {
+    bool is_moving = false;
+    for(int i=0;i<4;i++) {
+        for(int j=0;j<4;j++) {
             for(int k=j+1;k<4;k++){
-                if(plateau[i][j]==0 && plateau[i][k]!=0){
-                    plateau[i][j]=plateau[i][k];
-                    plateau[i][k]=0;
+                if(tiles[i][j]==0 && tiles[i][k]!=0){
+                    tiles[i][j]=tiles[i][k];
+                    tiles[i][k]=0;
+                    is_moving=true;
                 }
-                if(plateau[i][j]==plateau[i][k] && plateau[i][k]!=0){
-                    plateau[i][j]*=2;
-                    score+=plateau[i][j];
-                    plateau[i][k]=0;
+                if(tiles[i][j]==tiles[i][k] && tiles[i][k]!=0){
+                    tiles[i][j]*=2;
+                    score+=tiles[i][j];
+                    tiles[i][k]=0;
+                    is_moving=true;
                     break;
-                }if(plateau[i][k]!=0 && plateau[i][k]!=plateau[i][j]){
+                }if(tiles[i][k]!=0 && tiles[i][k]!=tiles[i][j]){
                     break;
                 }
             }
         }
-        if(droite){
-            plateau[i]=retournerLigne(plateau[i]);
+    }
+    return is_moving;
+}
+
+bool Game::move_right() {
+    bool is_moving=false;
+    for(int i=0;i<4;i++) {
+        for(int j=3;j>=0;j--) {
+            for(int k=j-1;k>=0;k--){
+                if(tiles[i][j]==0 && tiles[i][k]!=0){
+                    tiles[i][j]=tiles[i][k];
+                    tiles[i][k]=0;
+                    is_moving = true;
+                }
+                if(tiles[i][j]==tiles[i][k] && tiles[i][k]!=0){
+                    tiles[i][j]*=2;
+                    score+=tiles[i][j];
+                    tiles[i][k]=0;
+                    is_moving = true;
+                    break;
+                }if(tiles[i][k]!=0 && tiles[i][k]!=tiles[i][j]){
+                    break;
+                }
+            }
         }
     }
+    return is_moving;
 }
 
-bool Jeu::deplacement(string direction) {
-    Plateau plateauPrecedent = plateau;
-
-    if(!(direction=="h" || direction=="d" || direction=="b" || direction=="g")) return false;
-
-    if(direction=="h" || direction=="b"){
-        echangerLignesEtColonnes();
+bool Game::move_up() {
+    bool is_moving = false;
+    for(int i=0;i<4;i++) {
+        for(int j=0;j<4;j++) {
+            for(int k=i+1;k<4;k++){
+                if(tiles[i][j]==0 && tiles[k][j]!=0){
+                    tiles[i][j]=tiles[k][j];
+                    tiles[k][j]=0;
+                    is_moving=true;
+                }
+                if(tiles[i][j]==tiles[k][j] && tiles[k][j]!=0){
+                    tiles[i][j]*=2;
+                    score+=tiles[i][j];
+                    tiles[k][j]=0;
+                    is_moving=true;
+                    break;
+                }if(tiles[k][j]!=0 && tiles[k][j]!=tiles[i][j]){
+                    break;
+                }
+            }
+        }
     }
-
-    fusionnerEtAlignerLesLignes(direction=="b" || direction=="d");
-
-    if(direction=="h" || direction=="b"){
-        echangerLignesEtColonnes();
+    return is_moving;
+}
+bool Game::move_down() {
+    bool is_moving = false;
+    for(int i=3;i>=0;i--) {
+        for(int j=0;j<4;j++) {
+            for(int k=i-1;k>=0;k--){
+                if(tiles[i][j]==0 && tiles[k][j]!=0){
+                    tiles[i][j]=tiles[k][j];
+                    tiles[k][j]=0;
+                    is_moving=true;
+                }
+                if(tiles[i][j]==tiles[k][j] && tiles[k][j]!=0){
+                    tiles[i][j]*=2;
+                    score+=tiles[i][j];
+                    tiles[k][j]=0;
+                    is_moving=true;
+                    break;
+                }if(tiles[k][j]!=0 && tiles[k][j]!=tiles[i][j]){
+                    break;
+                }
+            }
+        }
     }
-
-    return plateauPrecedent!=plateau;
+    return is_moving;
+}
+bool Game::move(direction dir) {
+    bool is_moving = false;
+    switch (dir) {
+        case LEFT:
+            is_moving = move_left();
+            break;
+        case RIGHT:
+            is_moving = move_right();
+            break;
+        case UP:
+            is_moving = move_up();
+            break;
+        case DOWN:
+            is_moving = move_down();
+            break;
+    }
+    if(is_moving) add_number();
+    return is_moving;
 }
 
-bool Jeu::estTermine() {
+int Game::get_score() {
+    return score;
+}
+
+bool Game::is_over() {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            if (plateau[i][j] == 0) return false;
-            if (j < 3 && plateau[i][j] == plateau[i][j + 1]) return false; // Droite
-            if (i < 3 && plateau[i][j] == plateau[i + 1][j]) return false; // Bas
+            if (tiles[i][j] == 0) return false;
+            if (j < 3 && tiles[i][j] == tiles[i][j + 1]) return false; 
+            if (i < 3 && tiles[i][j] == tiles[i + 1][j]) return false;
         }
     }
     return true;
 }
 
-string Jeu::obtenirDessin(){
-    int maxTaille = tailleDuNombreLePlusLong(plateau);
-    string dessin  = "";
+std::string to_string(const Game& game) {
+    std::string result  = "";
     for(int i=0;i<9;i++){
         if(i%2==0){
-            for(int j=0; j<13+maxTaille*4;j++){
-                dessin+= "*";
+            for(int j=0; j<13+7*4;j++){
+                result+= "*";
             }
-            dessin+="\n";
+            result+="\n";
         }else{
             for(int j=0;j<4;j++){
-                dessin+= "* ";
-                for(int k=0;k<maxTaille - to_string(plateau[(i-1)/2][j]).size();k++){
-                    dessin+=" ";
+                result+= "* ";
+                for(int k=0;k<7 - std::to_string(game.tiles[(i-1)/2][j]).size();k++){
+                    result+=" ";
                 }
-                if(plateau[(i-1)/2][j]==0){
-                    dessin+="  ";
+                if(game.tiles[(i-1)/2][j]==0){
+                    result+="  ";
                 }else{
-                    dessin+=to_string(plateau[(i-1)/2][j])+" ";
+                    result+=std::to_string(game.tiles[(i-1)/2][j])+" ";
                 }
             }
-            dessin+="*\n";
+            result+="*\n";
         }
     }
-    return dessin;
-}
-
-Jeu::Jeu() {
-    plateau=vector<vector<int>>(4,vector<int>(4,0));
-    ajouterDeuxOuQuatre();
-    ajouterDeuxOuQuatre();
-    score=0;
-}
-
-int tireDeuxOuQuatre() {
-    return rand()%10==0 ? 4 : 2;
-}
-
-vector<int> retournerLigne(vector<int> ligne) {
-    vector<int> resultat(4);
-    for(int i=0;i<4;i++){
-        resultat[3-i]=ligne[i];
-    }
-    return resultat;
-}
-
-int tailleDuNombreLePlusLong(Plateau plateau) {
-    int max=0;
-    for(int i=0;i<4;i++){
-        for(int j=0;j<4;j++){
-            if(to_string(plateau[i][j]).size()>max){
-                max=to_string(plateau[i][j]).size();
-            }
-        }
-    }
-    return max;
+    return result;
 }
