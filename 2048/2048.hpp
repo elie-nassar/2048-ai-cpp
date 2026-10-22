@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 
 enum direction {LEFT,RIGHT,UP,DOWN};
